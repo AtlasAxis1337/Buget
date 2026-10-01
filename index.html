@@ -233,6 +233,24 @@
   .catlist.open{grid-template-rows:1fr}
   .catlist.open>div{padding-top:6px}
 
+  /* Categorii personalizate */
+  .emo{font-size:19px;line-height:1;font-style:normal}
+  .catpick button .cn{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 2px}
+  .catpick .newcat{border-style:dashed;color:var(--muted)}
+  .catpick .newcat .emo{font-size:18px;font-weight:800}
+  .catprev{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--soft);margin-bottom:14px}
+  .catprev .ico{width:36px;height:36px}
+  .catprev .dot{width:12px;height:12px;border-radius:50%;margin-left:auto}
+  .emopick{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+  .emopick button{aspect-ratio:1;border-radius:10px;font-size:20px;border:1.5px solid transparent}
+  .emopick button.on{border-color:var(--brand);background:var(--brandsoft)}
+  .colpick{display:flex;flex-wrap:wrap;gap:8px}
+  .colpick button{width:30px;height:30px;border-radius:50%;border:3px solid var(--card);box-shadow:0 0 0 1.5px var(--line)}
+  .colpick button.on{box-shadow:0 0 0 2.5px var(--ink)}
+  .delcat,.delcat-sp{width:28px!important;height:28px!important;flex-shrink:0;font-size:13px;opacity:.6}
+  .delcat:hover{opacity:1;color:var(--bad)}
+  @media (pointer:coarse){ .delcat-sp{display:none} }
+
   /* Meniu jos cu + în centru */
   nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);align-items:center;max-width:none;padding:8px max(8px,calc((100% - 640px)/2)) calc(8px + env(safe-area-inset-bottom));z-index:20}
   nav.tabs button[data-tab]{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--muted);padding:4px;font-weight:600}
@@ -335,6 +353,22 @@
   </form>
 </dialog>
 
+<!-- DIALOG CATEGORIE NOUĂ -->
+<dialog id="catDlg">
+  <form class="dlg" id="catForm" method="dialog">
+    <h3>Categorie nouă</h3>
+    <div class="catprev" id="catPrev"></div>
+    <div class="field"><label>Nume</label><input class="in" id="cName" required maxlength="24" placeholder="ex: Sănătate, Cadouri, Vacanță"></div>
+    <div class="field"><label>Iconiță</label><div class="emopick" id="emoPick"></div></div>
+    <div class="field"><label>Culoare</label><div class="colpick" id="colPick"></div></div>
+    <p class="bad" id="cErr" style="font-size:13px"></p>
+    <div class="actions">
+      <button type="button" class="btn sec" id="catCancel">Anulează</button>
+      <button type="submit" class="btn">Adaugă</button>
+    </div>
+  </form>
+</dialog>
+
 <!-- DIALOG EXPORT -->
 <dialog id="xlsDlg">
   <div class="dlg">
@@ -396,8 +430,21 @@ const CATEGORIES = [
   { id:'neprevazute', name:'Neprevăzute', icon:ICON.neprevazute, color:'#b8b4ab', ph:'ex: reparație' },
 ];
 const SAV = { id:'economii', name:'Economii', icon:ICON.economii, color:'#16a34a', ph:'ex: depunere cont economii' };
+const BASE_CATS = CATEGORIES.slice();
 const ALLCATS = [...CATEGORIES, SAV];
-const catOf = id => ALLCATS.find(c => c.id === id) || { name:id, icon:ICON.all, color:'#8a877f' };
+let ARCHIVED = [];   // categorii șterse – păstrate ca să se vadă numele la cheltuielile vechi
+const EMOJIS = ['🎁','💊','🏋️','🎓','👶','✈️','🍽️','☕','🎮','💇','🔧','📚','🎬','🍷','🚌','💻','🧸','🌱','🏥','⚽','🎂','🛠️','💐','🧾'];
+const COLORS = ['#ff5a1f','#2563eb','#16a34a','#9333ea','#db2777','#0891b2','#ca8a04','#8b5e3c','#64748b','#e11d48'];
+const emoIcon = e => `<span class="emo">${esc(e)}</span>`;
+const toCat = c => ({ id:c.id, name:c.name, icon:emoIcon(c.emoji), color:c.color, ph:'ex: ' + c.name.toLowerCase(), custom:true, emoji:c.emoji });
+function applySettings(st) {
+  state.settings = st || { customCats:[] };
+  const list = state.settings.customCats || [];
+  CATEGORIES.splice(0, CATEGORIES.length, ...BASE_CATS, ...list.filter(c => !c.deleted).map(toCat));
+  ALLCATS.splice(0, ALLCATS.length, ...CATEGORIES, SAV);
+  ARCHIVED = list.filter(c => c.deleted).map(toCat);
+}
+const catOf = id => ALLCATS.find(c => c.id === id) || ARCHIVED.find(c => c.id === id) || { name:id, icon:ICON.all, color:'#8a877f' };
 
 const DEFAULT_BUDGET = () => ({
   incomes: [
@@ -465,6 +512,8 @@ function createLocalStore() {
     async updateExpense(id, p) { const d = load(); const x = d.expenses.find(e => e.id === id); if (x) Object.assign(x, p); save(d); },
     async deleteExpense(id) { const d = load(); d.expenses = d.expenses.filter(e => e.id !== id); save(d); },
     async getMonthExpenses(k) { return load().expenses.filter(e => e.month === k); },
+    watchSettings(cb) { const f = () => cb(load().settings || null); subs.add(f); f(); return () => subs.delete(f); },
+    async saveSettings(st) { const d = load(); d.settings = st; save(d); },
     async getAll() { return load(); },
   };
 }
@@ -499,6 +548,9 @@ async function createFirebaseStore() {
     addExpense: e => F.addDoc(F.collection(db, 'expenses'), { ...e, createdAt:Date.now() }),
     updateExpense: (id, p) => F.updateDoc(F.doc(db, 'expenses', id), p),
     deleteExpense: id => F.deleteDoc(F.doc(db, 'expenses', id)),
+    // setările (categoriile personalizate) stau în budgets/settings – nu e nevoie de reguli noi în Firestore
+    watchSettings(cb) { return F.onSnapshot(F.doc(db, 'budgets', 'settings'), s => cb(s.exists() ? s.data() : null), onErr); },
+    saveSettings: st => F.setDoc(F.doc(db, 'budgets', 'settings'), st),
     async getMonthExpenses(k) {
       const q = await F.getDocs(F.query(F.collection(db, 'expenses'), F.where('month', '==', k)));
       return q.docs.map(d => ({ id:d.id, ...d.data() }));
@@ -534,12 +586,14 @@ function calc(b, ex) {
 /* ---------------- Stare ---------------- */
 const store = LOCAL ? createLocalStore() : await createFirebaseStore();
 const nowKey = monthKey(new Date());
-const state = { user:null, month: nowKey < START_MONTH ? START_MONTH : nowKey, budget:null, expenses:[], tab:'dash', cat:'all', q:'', prevExp:null, unsub:null, editId:null, pickCat:'mancare' };
+const state = { user:null, month: nowKey < START_MONTH ? START_MONTH : nowKey, budget:null, expenses:[], tab:'dash', cat:'all', q:'', prevExp:null, unsub:null, editId:null, pickCat:'mancare', settings:{ customCats:[] }, unsubSet:null };
 
 store.onAuth(u => {
   state.user = u;
-  if (u) { $('#loginScreen').classList.add('hidden'); $('#app').classList.remove('hidden'); $('#whoName').textContent = u.name; const hr = new Date().getHours(); $('#hello').textContent = `${hr < 12 ? 'Bună dimineața' : hr < 18 ? 'Bună ziua' : 'Bună seara'} 👋`; openMonth(state.month); }
-  else { state.unsub?.(); $('#app').classList.add('hidden'); showLogin(); }
+  if (u) { $('#loginScreen').classList.add('hidden'); $('#app').classList.remove('hidden'); $('#whoName').textContent = u.name; const hr = new Date().getHours(); $('#hello').textContent = `${hr < 12 ? 'Bună dimineața' : hr < 18 ? 'Bună ziua' : 'Bună seara'} 👋`;
+    state.unsubSet?.(); state.unsubSet = store.watchSettings(st => { applySettings(st); render(); if (dlg.open) drawCatPick(); });
+    openMonth(state.month); }
+  else { state.unsub?.(); state.unsubSet?.(); $('#app').classList.add('hidden'); showLogin(); }
 });
 
 function showLogin() {
@@ -767,7 +821,8 @@ function renderExp(c) {
   }
   const chips = [{ id:'all', name:'Toate' }, ...ALLCATS];
   const all = state.cat === 'all';
-  const list = all ? ALLCATS : ALLCATS.filter(k => k.id === state.cat);
+  const extra = ARCHIVED.filter(k => state.expenses.some(e => e.category === k.id));
+  const list = all ? [...ALLCATS, ...extra] : [...ALLCATS, ...extra].filter(k => k.id === state.cat);
   const q = norm(state.q);
   const match = e => !q || [e.desc, e.addedBy, catOf(e.category).name, String(e.amount), shortDate(e.date)].some(v => norm(v).includes(q));
   const found = state.expenses.filter(e => match(e) && (all || e.category === state.cat));
@@ -779,7 +834,7 @@ function renderExp(c) {
     const tot = sumOf(state.expenses.filter(e => e.category === k.id));
     const lim = k.id === 'economii' ? 0 : limOf(c.b, k.id), st = limState(tot, lim);
     return `<div class="card">
-      <div class="grouphead"><span class="gl"><span class="ico">${k.icon}</span>${k.name}</span><span class="${st}">${lim ? `${NF.format(Math.round(tot))} / ${NF.format(lim)} lei` : fmt(tot)}</span></div>
+      <div class="grouphead"><span class="gl"><span class="ico">${k.icon}</span>${esc(k.name)}</span><span class="${st}">${lim ? `${NF.format(Math.round(tot))} / ${NF.format(lim)} lei` : fmt(tot)}</span></div>
       ${lim ? `<div class="mini" style="margin:8px 0 2px"><span style="width:${Math.min(100, tot / lim * 100)}%;background:${limColor(st, k.color)}"></span></div>` : ''}
       ${items.length ? items.map(expRow).join('') : '<div class="empty">Nimic aici încă.</div>'}
       <div class="cardfoot"><button class="btn sec sm" data-addcat="${k.id}">+ Adaugă la ${k.name}</button></div>
@@ -833,11 +888,12 @@ function renderFix(c) {
       <button class="addline" data-addrow="fixed">+ Adaugă cheltuială fixă</button>
     </div>
     <div class="card sumcard">
-      <div class="sechead"><div class="tile lim">${FIXICON.lim}</div><div><div class="tt">Limite lunare pe categorii</div><div class="st">Lasă gol pentru fără limită · se preiau automat luna următoare</div></div></div>
+      <div class="sechead"><div class="tile lim">${FIXICON.lim}</div><div><div class="tt">Categorii & limite lunare</div><div class="st">Lasă limita goală pentru „fără limită” · se preiau automat luna următoare</div></div></div>
       <div class="cols" style="margin:0;gap:0 28px">
-      <div>${CATEGORIES.slice(0, 3).map(k => limRow(k, c)).join('')}</div>
-      <div>${CATEGORIES.slice(3).map(k => limRow(k, c)).join('')}</div>
+      <div>${CATEGORIES.slice(0, Math.ceil(CATEGORIES.length / 2)).map(k => limRow(k, c)).join('')}</div>
+      <div>${CATEGORIES.slice(Math.ceil(CATEGORIES.length / 2)).map(k => limRow(k, c)).join('')}</div>
       </div>
+      <button class="addline" data-newcatbtn>+ Adaugă categorie</button>
     </div>
   </div>`;
 }
@@ -850,6 +906,7 @@ function limRow(k, c) {
       <div class="mini"><span style="width:${lim ? Math.min(100, sp / lim * 100) : 0}%;background:${limColor(st, k.color)}"></span></div>
     </div>
     <input class="liminp" type="number" min="0" step="50" inputmode="numeric" placeholder="fără" data-lim="${k.id}" value="${lim || ''}" aria-label="Limită ${k.name}">
+    ${k.custom ? `<button class="icon-btn delcat" data-delcat="${k.id}" aria-label="Șterge categoria ${esc(k.name)}">✕</button>` : '<span class="delcat-sp"></span>'}
   </div>`;
 }
 
@@ -897,6 +954,8 @@ document.querySelector('main').addEventListener('click', async e => {
     tg.querySelector('span').textContent = open ? 'Ascunde categoriile' : 'Vezi toate categoriile';
     return;
   }
+  if (e.target.closest('[data-newcatbtn]')) return openCatDlg(false);
+  const dc = e.target.closest('[data-delcat]'); if (dc) return deleteCat(dc.dataset.delcat);
   const t = e.target.closest('[data-act],[data-cat],[data-chip],[data-addcat],[data-addrow],[data-rm]'); if (!t) return;
   if (t.dataset.act === 'swdel') {
     const x = state.expenses.find(y => y.id === t.dataset.id); if (!x) return;
@@ -994,10 +1053,63 @@ mainEl.addEventListener('touchend', () => {
 /* ---------------- Dialog cheltuială ---------------- */
 const dlg = $('#expDlg');
 function drawCatPick() {
-  $('#catPick').innerHTML = ALLCATS.map(k => `<button type="button" class="${state.pickCat === k.id ? 'on' : ''}" data-pc="${k.id}">${k.icon}${k.name}</button>`).join('');
+  $('#catPick').innerHTML = ALLCATS.map(k => `<button type="button" class="${state.pickCat === k.id ? 'on' : ''}" data-pc="${k.id}">${k.icon}<span class="cn">${esc(k.name)}</span></button>`).join('')
+    + `<button type="button" class="newcat" data-newcat><span class="emo">＋</span>Nouă</button>`;
   $('#fDesc').placeholder = catOf(state.pickCat).ph || '';
 }
-$('#catPick').addEventListener('click', e => { const b = e.target.closest('[data-pc]'); if (b) { state.pickCat = b.dataset.pc; drawCatPick(); } });
+$('#catPick').addEventListener('click', e => {
+  if (e.target.closest('[data-newcat]')) return openCatDlg(true);
+  const b = e.target.closest('[data-pc]'); if (b) { state.pickCat = b.dataset.pc; drawCatPick(); }
+});
+
+/* ---------------- Categorie nouă ---------------- */
+const cdlg = $('#catDlg');
+let newCat = { emoji:EMOJIS[0], color:COLORS[1] }, catFromExp = false;
+function drawCatDlg() {
+  $('#emoPick').innerHTML = EMOJIS.map(x => `<button type="button" class="${newCat.emoji === x ? 'on' : ''}" data-emo="${x}">${x}</button>`).join('');
+  $('#colPick').innerHTML = COLORS.map(x => `<button type="button" class="${newCat.color === x ? 'on' : ''}" data-col="${x}" style="background:${x}" aria-label="${x}"></button>`).join('');
+  $('#catPrev').innerHTML = `<span class="ico" style="background:${newCat.color}22">${emoIcon(newCat.emoji)}</span><b>${esc($('#cName').value.trim() || 'Categorie nouă')}</b><span class="dot" style="background:${newCat.color}"></span>`;
+}
+function openCatDlg(fromExp) {
+  catFromExp = !!fromExp;
+  newCat = { emoji:EMOJIS[(state.settings.customCats || []).length % EMOJIS.length], color:COLORS[((state.settings.customCats || []).length + 1) % COLORS.length] };
+  $('#cName').value = ''; $('#cErr').textContent = '';
+  drawCatDlg(); cdlg.showModal(); setTimeout(() => $('#cName').focus(), 50);
+}
+$('#emoPick').addEventListener('click', e => { const b = e.target.closest('[data-emo]'); if (b) { newCat.emoji = b.dataset.emo; drawCatDlg(); } });
+$('#colPick').addEventListener('click', e => { const b = e.target.closest('[data-col]'); if (b) { newCat.color = b.dataset.col; drawCatDlg(); } });
+$('#cName').addEventListener('input', drawCatDlg);
+$('#catCancel').onclick = () => cdlg.close();
+$('#catForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = $('#cName').value.replace(/[<>"&]/g, '').trim().replace(/\s+/g, ' ');
+  if (!name) return;
+  const clash = [...ALLCATS, ...ARCHIVED].find(k => norm(k.name) === norm(name));
+  const list = clone(state.settings.customCats || []);
+  let id;
+  if (clash && clash.custom && list.find(c => c.id === clash.id)?.deleted) {
+    const c = list.find(c => c.id === clash.id); c.deleted = false; c.emoji = newCat.emoji; c.color = newCat.color; id = c.id;   // re-activează
+  } else if (clash) {
+    $('#cErr').textContent = 'Există deja o categorie cu acest nume.'; return;
+  } else {
+    id = 'c_' + uid(); list.push({ id, name:name.slice(0, 24), emoji:newCat.emoji, color:newCat.color });
+  }
+  const st = { ...state.settings, customCats:list };
+  applySettings(st); cdlg.close();
+  if (catFromExp) { state.pickCat = id; drawCatPick(); }
+  render(true);
+  try { await store.saveSettings(st); toast(`Categoria „${name}” a fost adăugată`); }
+  catch (err) { toast('Eroare la salvare: ' + (err.code || err.message)); }
+});
+async function deleteCat(id) {
+  const k = catOf(id); const n = state.expenses.filter(e => e.category === id).length;
+  if (!confirm(`Ștergi categoria „${k.name}”?${n ? `\n\nCele ${n} cheltuieli din luna aceasta rămân și se adună în continuare în totaluri.` : ''}`)) return;
+  const list = clone(state.settings.customCats || []); const c = list.find(x => x.id === id); if (!c) return;
+  c.deleted = true;
+  const st = { ...state.settings, customCats:list };
+  applySettings(st); if (state.cat === id) state.cat = 'all'; render(true);
+  try { await store.saveSettings(st); toast('Categorie ștearsă'); } catch (err) { toast('Eroare: ' + (err.code || err.message)); }
+}
 
 const PERSON_KEY = 'pb_person';
 let pickPerson = localStorage.getItem(PERSON_KEY) || CONFIG.people[0];
@@ -1078,7 +1190,7 @@ async function exportExcel(all) {
     let budgets, expenses;
     if (all) { toast('Se pregătește fișierul…'); const d = await store.getAll(); budgets = d.budgets; expenses = d.expenses; }
     else { budgets = { [state.month]:state.budget || DEFAULT_BUDGET() }; expenses = state.expenses; }
-    const months = [...new Set([...Object.keys(budgets), ...expenses.map(e => e.month)])].filter(m => m >= START_MONTH).sort();
+    const months = [...new Set([...Object.keys(budgets), ...expenses.map(e => e.month)])].filter(m => /^\d{4}-\d{2}$/.test(m) && m >= START_MONTH).sort();
     expenses = expenses.filter(e => e.month >= START_MONTH).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
     const wb = XLSX.utils.book_new();
 
@@ -1096,7 +1208,7 @@ async function exportExcel(all) {
     addSheet(wb, 'Cheltuieli fixe', ['Luna', 'Denumire', 'Suma', 'Plătit'],
       months.flatMap(m => (budgets[m] || DEFAULT_BUDGET()).fixed.map(f => [monthLabel(m), f.name, +f.amount || 0, f.paid ? 'Da' : 'Nu'])), [2]);
 
-    ALLCATS.forEach(k => addSheet(wb, k.name, ['Luna', 'Data', 'Descriere', 'Suma', 'Adăugat de'],
+    [...ALLCATS, ...ARCHIVED.filter(k => expenses.some(e => e.category === k.id))].forEach(k => addSheet(wb, k.name.replace(/[\\/?*\[\]:]/g, ' '), ['Luna', 'Data', 'Descriere', 'Suma', 'Adăugat de'],
       expenses.filter(e => e.category === k.id).map(e => [monthLabel(e.month), e.date, e.desc, +e.amount || 0, e.addedBy || '']), [3]));
 
     addSheet(wb, 'Toate cheltuielile', ['Luna', 'Data', 'Categorie', 'Descriere', 'Suma', 'Adăugat de'],
