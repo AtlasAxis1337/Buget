@@ -221,6 +221,18 @@
   }
   html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 
+  /* Categorii pliabile pe Acasă */
+  .catdots{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:12px}
+  .catdots b{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+  .catalerts{margin-top:12px}
+  .cattoggle{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:14px;padding:11px;border-radius:14px;background:var(--soft);font-weight:700;font-size:14px;color:var(--ink)}
+  .cattoggle svg{width:18px;height:18px;transition:transform .25s}
+  .cattoggle.open svg{transform:rotate(180deg)}
+  .catlist{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
+  .catlist>div{overflow:hidden}
+  .catlist.open{grid-template-rows:1fr}
+  .catlist.open>div{padding-top:6px}
+
   /* Meniu jos cu + în centru */
   nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);align-items:center;max-width:none;padding:8px max(8px,calc((100% - 640px)/2)) calc(8px + env(safe-area-inset-bottom));z-index:20}
   nav.tabs button[data-tab]{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--muted);padding:4px;font-weight:600}
@@ -359,6 +371,8 @@ const CONFIG = {
   // persoanele care pot fi alese la fiecare cheltuială
   people: ["Traian", "Roxana"]
 };
+const DARKQ = matchMedia('(prefers-color-scheme: dark)');
+const isDark = () => DARKQ.matches;
 const LOCAL = !CONFIG.firebase.apiKey;
 const START_MONTH = '2026-10'; // prima lună din aplicație (Octombrie 2026)
 
@@ -434,7 +448,7 @@ function createLocalStore() {
   window.addEventListener('storage', e => { if (e.key === KEY) subs.forEach(f => f()); });
   let authCb = null;
   return {
-    onAuth(cb) { authCb = cb; const u = sessionStorage.getItem('fb_user'); cb(u ? { name:u } : null); },
+    onAuth(cb) { authCb = cb; const u = sessionStorage.getItem('fb_user'); setTimeout(() => cb(u ? { name:u } : null)); },
     async login(name) { sessionStorage.setItem('fb_user', name); authCb({ name }); },
     async logout() { sessionStorage.removeItem('fb_user'); authCb(null); },
     async ensureBudget(key) {
@@ -632,8 +646,6 @@ function donut(id, segs, centerL, centerV) {
     <div class="center"><div class="l">${centerL}</div><div class="v">${centerV}</div><div class="mono"></div></div></div>`;
 }
 const DONUTS = {};
-const DARKQ = matchMedia('(prefers-color-scheme: dark)');
-const isDark = () => DARKQ.matches;
 DARKQ.addEventListener?.('change', () => render(true));
 document.addEventListener('click', e => {
   const sg = e.target.closest('circle.seg'); if (!sg) return;
@@ -643,7 +655,8 @@ document.addEventListener('click', e => {
   const tot = d.segs.reduce((a, y) => a + Math.max(0, y.v), 0);
   box.querySelector('.l').textContent = x.n;
   box.querySelector('.v').textContent = Math.round(x.v / tot * 100) + '%';
-  box.querySelector('.mono').textContent = fmt(x.v);
+  const kk = CATEGORIES.find(k => k.name === x.n), lim = kk ? limOf(state.budget, kk.id) : 0;
+  box.querySelector('.mono').textContent = lim ? `${fmt(x.v)} / ${NF.format(lim)}` : fmt(x.v);
 }, true);
 
 function renderDash(c) {
@@ -703,10 +716,13 @@ function renderDash(c) {
       <div class="card">
         <h3>Pe categorii · ${monthLabel(state.month).split(' ')[0]} <span class="muted">${ps ? 'vs ' + ps.label : 'Apasă pe felii'}</span></h3>
         ${donut('dCat', catSegs, c.variable > 0 ? 'Variabile' : 'Nimic încă', c.variable > 0 ? NF.format(Math.round(c.variable)) + ' lei' : '—')}
-        <div style="margin-top:14px">
-        ${CATEGORIES.map(k => {
-          const sp = c.byCat[k.id], lim = limOf(c.b, k.id), st = limState(sp, lim);
-          const w = lim ? Math.min(100, sp / lim * 100) : pctV(sp);
+        <div class="catdots">${CATEGORIES.filter(k => c.byCat[k.id] > 0).map(k => `<span><b style="background:${k.color}"></b>${k.name}</span>`).join('')}</div>
+        ${(() => {
+          const alerts = CATEGORIES.filter(k => limState(c.byCat[k.id], limOf(c.b, k.id)));
+          const open = localStorage.getItem('pb_catsOpen') === '1';
+          const rowOf = k => {
+            const sp = c.byCat[k.id], lim = limOf(c.b, k.id), st = limState(sp, lim);
+            const w = lim ? Math.min(100, sp / lim * 100) : pctV(sp);
           const info = lim ? `${NF.format(Math.round(sp))} / ${NF.format(lim)} lei` : `${NF.format(Math.round(sp))} lei · ${pctV(sp)}%`;
           const sub = !lim ? '' : st === 'bad' ? `<div class="limtxt bad">Depășit cu ${fmt(sp - lim)}</div>` : st === 'warn' ? `<div class="limtxt warn">Aproape de limită · mai ai ${fmt(lim - sp)}</div>` : `<div class="limtxt">Mai ai ${fmt(lim - sp)}</div>`;
           return `
@@ -717,8 +733,15 @@ function renderDash(c) {
               <div class="mini"><span style="width:${w}%;background:${limColor(st, k.color)}"></span></div>${sub}
             </div>
             <span class="chev">›</span>
-          </div>`; }).join('')}
-        </div>
+          </div>`; };
+          return `
+          ${alerts.length && !open ? `<div class="catalerts">${alerts.map(rowOf).join('')}</div>` : ''}
+          <button class="cattoggle ${open ? 'open' : ''}" data-cattoggle>
+            <span>${open ? 'Ascunde categoriile' : `Vezi toate categoriile${alerts.length ? '' : ` · ${CATEGORIES.filter(k => c.byCat[k.id] > 0).length} active`}`}</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="catlist ${open ? 'open' : ''}"><div>${CATEGORIES.map(rowOf).join('')}</div></div>`;
+        })()}
       </div>
       <div class="card">
         <h3>Recent <button class="muted" style="color:var(--brand);font-weight:700" data-cat="all">Toate</button></h3>
@@ -864,6 +887,16 @@ async function commitBudget(b) {
 /* ---------------- Evenimente ---------------- */
 document.querySelector('main').addEventListener('click', async e => {
   if (Date.now() < swipeIgnoreUntil) return;
+  const tg = e.target.closest('[data-cattoggle]');
+  if (tg) {
+    const open = !tg.classList.contains('open');
+    localStorage.setItem('pb_catsOpen', open ? '1' : '0');
+    tg.classList.toggle('open', open);
+    tg.nextElementSibling.classList.toggle('open', open);
+    tg.previousElementSibling?.classList.contains('catalerts') && (tg.previousElementSibling.style.display = open ? 'none' : '');
+    tg.querySelector('span').textContent = open ? 'Ascunde categoriile' : 'Vezi toate categoriile';
+    return;
+  }
   const t = e.target.closest('[data-act],[data-cat],[data-chip],[data-addcat],[data-addrow],[data-rm]'); if (!t) return;
   if (t.dataset.act === 'swdel') {
     const x = state.expenses.find(y => y.id === t.dataset.id); if (!x) return;
