@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Planificare Buget</title>
-<meta name="theme-color" content="#f5f3ee">
+<meta name="theme-color" content="#f5f3ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111111" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
@@ -13,7 +14,16 @@
     --bg:#f5f3ee; --card:#fff; --ink:#1c1c1c; --muted:#8a877f; --line:#ece9e2; --soft:#f3f1ec;
     --brand:#ff5a1f; --brandsoft:#fff0e8; --ok:#16a34a; --warn:#d97706; --bad:#e5484d;
     --r:20px; --shadow:0 1px 2px rgba(28,28,28,.04),0 6px 20px rgba(28,28,28,.05);
-    --navh:72px;
+    --navh:72px; --onink:#fff;
+    color-scheme:light dark;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#111111; --card:#1b1b1d; --ink:#f2f1ee; --muted:#9b978f; --line:#2a2a2d; --soft:#242427;
+      --brandsoft:#3a1f13; --ok:#22c55e; --warn:#f59e0b; --bad:#f2555a; --onink:#111111;
+      --shadow:0 0 0 1px #232326;
+    }
+    .glow::after{background:radial-gradient(circle,rgba(255,90,31,.18),rgba(255,90,31,0) 70%)!important}
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-padding-bottom:calc(var(--navh) + 40px)}
@@ -30,13 +40,13 @@
   .hello{font-size:13px;color:var(--muted)}
   .brand{font-weight:800;font-size:22px;letter-spacing:-.01em}
   .who{display:flex;align-items:center;gap:8px}
-  .avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;color:#fff;background:var(--ink);border:2px solid var(--bg)}
+  .avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;color:var(--onink);background:var(--ink);border:2px solid var(--bg)}
   .avatar.o{background:var(--brand);margin-left:-12px}
   .monthbar{display:flex;align-items:center;gap:8px;margin-top:16px}
   .seg{display:flex;align-items:center;gap:4px;background:var(--card);border-radius:99px;padding:4px;box-shadow:var(--shadow)}
   .mbtn{width:34px;height:34px;border-radius:50%;font-size:20px;line-height:1;color:var(--ink)}
   .mbtn:hover{background:var(--soft)}
-  .monthbar h2{font-size:14px;font-weight:700;padding:0 10px;background:var(--ink);color:#fff;border-radius:99px;height:34px;display:flex;align-items:center;white-space:nowrap}
+  .monthbar h2{font-size:14px;font-weight:700;padding:0 10px;background:var(--ink);color:var(--onink);border-radius:99px;height:34px;display:flex;align-items:center;white-space:nowrap}
   .btn-w{margin-left:auto;background:var(--card);box-shadow:var(--shadow);font-weight:700;padding:9px 16px;border-radius:99px;font-size:13px;white-space:nowrap}
   .ghost-w{background:var(--card);box-shadow:var(--shadow);padding:7px 12px;border-radius:99px;font-size:12px;font-weight:600;color:var(--muted)}
 
@@ -107,22 +117,31 @@
   .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
   .chip{padding:8px 15px;border-radius:99px;font-size:13px;font-weight:700;white-space:nowrap;color:var(--muted)}
-  .chip.on{background:var(--ink);color:#fff}
+  .chip.on{background:var(--ink);color:var(--onink)}
   .grouphead{display:flex;justify-content:space-between;align-items:center;font-weight:800;padding:2px 0 10px;border-bottom:1px solid var(--line)}
   .grouphead .gl{display:flex;align-items:center;gap:10px}
 
   /* Liste editabile */
-  .erow{display:grid;grid-template-columns:auto 1fr 120px auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
-  .erow.inc{grid-template-columns:auto 1fr 64px 120px auto}
+  .erow{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--line)}
+  .erow:last-of-type{border-bottom:0}
+  .erow .ein{flex:1;min-width:0;border:0;background:transparent;padding:9px 4px;border-radius:8px;font-weight:600}
+  .erow .eamt{width:78px;flex-shrink:0;border:0;background:transparent;padding:9px 4px;border-radius:8px;text-align:right;font-weight:800}
+  .erow .ein:focus,.erow .eamt:focus{outline:0;background:var(--soft)}
+  .erow .lei{font-size:12px;color:var(--muted);margin-left:-4px}
+  .erow .chk{margin-right:4px}
+  .erow.done .ein{color:var(--muted);text-decoration:line-through}
+  .erow .icon-btn{width:28px;height:28px;font-size:13px;opacity:.5}
+  .erow .icon-btn:hover{opacity:1}
+  .linkbtn{color:var(--brand);font-weight:700;font-size:14px;padding:10px 0 0}
   .in{width:100%;border:1px solid var(--line);border-radius:12px;padding:9px 11px;background:var(--soft);min-width:0}
-  .in:focus{outline:2px solid var(--brand);border-color:transparent;background:#fff}
+  .in:focus{outline:2px solid var(--brand);border-color:transparent;background:var(--card)}
   .in.num{text-align:right}
   .chk{width:22px;height:22px;accent-color:var(--brand)}
   .tot{display:flex;justify-content:space-between;font-weight:800;padding-top:12px;margin-top:4px;border-top:1px solid var(--line)}
   .cardfoot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-top:14px}
   .btn{background:var(--brand);color:#fff;font-weight:700;padding:11px 16px;border-radius:99px}
   .btn.sec{background:var(--soft);color:var(--ink)}
-  .btn.dark{background:var(--ink);color:#fff}
+  .btn.dark{background:var(--ink);color:var(--onink)}
   .btn.sm{padding:8px 14px;font-size:13px}
   .btn.full{width:100%}
 
@@ -133,15 +152,71 @@
     .brand{font-size:18px}
     .avatar{width:30px;height:30px;font-size:12px}
     .grid,.cols{gap:10px}
-    .erow{grid-template-columns:auto 1fr 96px auto}
-    .erow.inc{grid-template-columns:auto 64px 1fr auto;grid-template-areas:"c n n x" ". d a .";row-gap:6px}
-    .erow.inc .c{grid-area:c}.erow.inc .n{grid-area:n}.erow.inc .d{grid-area:d}.erow.inc .a{grid-area:a}.erow.inc .x{grid-area:x}
     .btn-w{padding:9px 12px}
     .monthbar h2{font-size:13px;padding:0 8px}
   }
 
+  /* Swipe pentru ștergere */
+  .swipe{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+  .swipe:last-child{border-bottom:0}
+  .swipe .row{background:var(--card);border-bottom:0;position:relative;z-index:1;transition:transform .22s ease;touch-action:pan-y;cursor:pointer}
+  .swipe-del{position:absolute;right:0;top:0;bottom:0;width:92px;background:var(--bad);color:#fff;font-weight:800;font-size:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+  .swipe-del svg{width:20px;height:20px}
+  @media (hover:none),(pointer:coarse){ .row .icon-btn{display:none} }
+  .hint{font-size:12px;color:var(--muted);text-align:center;margin:-6px 0 12px}
+  @media (hover:hover) and (pointer:fine){ .hint{display:none} }
+
+  /* Căutare */
+  .searchbar{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:99px;box-shadow:var(--shadow);padding:4px 6px 4px 16px;margin-bottom:10px}
+  .searchbar svg{width:18px;height:18px;color:var(--muted);flex-shrink:0}
+  .searchbar input{flex:1;border:0;background:transparent;padding:10px 4px;outline:0;min-width:0;font-size:15px}
+  .searchbar .icon-btn{display:grid;place-items:center}
+  .sresult{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin:0 4px 12px}
+  .sresult b{color:var(--ink)}
+  mark{background:var(--brandsoft);color:var(--brand);border-radius:4px;padding:0 2px}
+
+  /* Comparație cu luna trecută */
+  .dchip{display:inline-block;font-size:11px;font-weight:800;padding:2px 7px;border-radius:99px;background:var(--soft);color:var(--muted);margin-left:6px;vertical-align:1px;white-space:nowrap}
+  .dchip.up{background:rgba(229,72,77,.13);color:var(--bad)}
+  .dchip.down{background:rgba(22,163,74,.13);color:var(--ok)}
+  .cmp{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:4px}
+  .limtxt{font-size:11px;color:var(--muted);margin-top:4px}
+  .limtxt.warn{color:var(--warn);font-weight:700}.limtxt.bad{color:var(--bad);font-weight:700}
+
+  /* Venit & Fixe */
+  .sumcard .big{font-size:36px}
+  .stat2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+  .stat2>div{background:var(--soft);border-radius:14px;padding:12px}
+  .stat2 .k{font-size:12px;color:var(--muted);font-weight:700}
+  .stat2 .v{font-size:15px;font-weight:800;margin:2px 0 8px}
+  .stat2 .v small{font-weight:600;color:var(--muted)}
+  .sechead{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .sechead .tile{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;flex-shrink:0}
+  .sechead .tile svg{width:22px;height:22px}
+  .tile.inc{background:rgba(22,163,74,.13);color:var(--ok)}
+  .tile.fix{background:var(--brandsoft);color:var(--brand)}
+  .tile.lim{background:var(--soft);color:var(--ink)}
+  .sechead .tt{font-weight:800;font-size:16px}
+  .sechead .st{font-size:12px;color:var(--muted)}
+  .countpill{margin-left:auto;font-size:12px;font-weight:800;padding:5px 10px;border-radius:99px;background:var(--soft);white-space:nowrap}
+  .countpill.all{background:rgba(22,163,74,.13);color:var(--ok)}
+  .totpill{display:flex;justify-content:space-between;align-items:center;background:var(--soft);border-radius:14px;padding:12px 14px;margin-top:10px;font-weight:800}
+  .totpill span:first-child{font-size:13px;color:var(--muted);font-weight:700}
+  .addline{width:100%;margin-top:10px;border:1.5px dashed var(--line);border-radius:14px;padding:11px;font-weight:700;font-size:14px;color:var(--muted);transition:.15s}
+  .addline:hover{border-color:var(--brand);color:var(--brand)}
+  .erow .chk{appearance:none;-webkit-appearance:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;cursor:pointer;margin:0 4px 0 0;transition:.15s;flex-shrink:0}
+  .erow .chk:checked{background:var(--ok);border-color:var(--ok)}
+  .erow .chk:checked::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:translate(0,-1px) rotate(45deg)}
+  .limrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .limrow:last-of-type{border-bottom:0}
+  .limrow .grow .nm{font-weight:700;display:flex;justify-content:space-between;gap:6px}
+  .limrow .grow .nm .mono{font-weight:500}
+  .liminp{width:96px;flex-shrink:0;border:1px solid var(--line);background:var(--soft);border-radius:10px;padding:8px 10px;text-align:right;font-weight:800;min-width:0}
+  .liminp:focus{outline:2px solid var(--brand);border-color:transparent;background:var(--card)}
+  @media(min-width:900px){.sumcard{grid-column:1/-1}}
+
   /* Meniu jos cu + în centru */
-  nav.tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);align-items:center;max-width:none;padding:8px max(8px,calc((100% - 640px)/2)) calc(8px + env(safe-area-inset-bottom));z-index:20}
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);align-items:center;max-width:none;padding:8px max(8px,calc((100% - 640px)/2)) calc(8px + env(safe-area-inset-bottom));z-index:20}
   nav.tabs button[data-tab]{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--muted);padding:4px;font-weight:600}
   nav.tabs button[data-tab] svg{width:22px;height:22px}
   nav.tabs button.on{color:var(--ink);font-weight:800}
@@ -161,14 +236,14 @@
   .catpick button.on{border-color:var(--brand);background:var(--brandsoft);color:var(--brand)}
   .personpick{display:flex;gap:6px}
   .personpick button{flex:1;border:1.5px solid var(--line);border-radius:99px;padding:9px;font-weight:700;font-size:14px}
-  .personpick button.on{border-color:var(--ink);background:var(--ink);color:#fff}
+  .personpick button.on{border-color:var(--ink);background:var(--ink);color:var(--onink)}
   .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 
   .login{min-height:100vh;display:grid;place-items:center;padding:20px;background:var(--bg)}
   .login .card{width:min(380px,100%);padding:26px}
   .login h1{font-size:24px;font-weight:800;margin-bottom:4px}
 
-  .toast{position:fixed;left:50%;bottom:calc(var(--navh) + 30px);transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;font-weight:600;z-index:50;opacity:0;transition:opacity .25s;pointer-events:none}
+  .toast{position:fixed;left:50%;bottom:calc(var(--navh) + 30px);transform:translateX(-50%);background:var(--ink);color:var(--onink);padding:10px 18px;border-radius:99px;font-size:14px;font-weight:600;z-index:50;opacity:0;transition:opacity .25s;pointer-events:none;max-width:90vw;text-align:center}
   .toast.show{opacity:1}
 </style>
 </head>
@@ -297,7 +372,7 @@ const CATEGORIES = [
   { id:'mancare',     name:'Mâncare',     icon:ICON.mancare, color:'#ff5a1f', ph:'ex: Kaufland, Lidl' },
   { id:'casa',        name:'Casă',        icon:ICON.casa, color:'#c9a27a', ph:'ex: perdele, covor' },
   { id:'haine',       name:'Haine',       icon:ICON.haine, color:'#ffb59a', ph:'ex: geacă iarnă' },
-  { id:'ollie',       name:'Ollie',       icon:ICON.ollie, color:'#2e2d2b', ph:'ex: hrană, veterinar' },
+  { id:'ollie',       name:'Ollie',       icon:ICON.ollie, color:'#8b5e3c', ph:'ex: hrană, veterinar' },
   { id:'neprevazute', name:'Neprevăzute', icon:ICON.neprevazute, color:'#b8b4ab', ph:'ex: reparație' },
 ];
 const SAV = { id:'economii', name:'Economii', icon:ICON.economii, color:'#16a34a', ph:'ex: depunere cont economii' };
@@ -306,9 +381,9 @@ const catOf = id => ALLCATS.find(c => c.id === id) || { name:id, icon:ICON.all, 
 
 const DEFAULT_BUDGET = () => ({
   incomes: [
-    { id:'i1', name:'Salariu Traian',     amount:19000, day:6,  received:false },
-    { id:'i2', name:'Roxana – avans',     amount:2500,  day:25, received:false },
-    { id:'i3', name:'Roxana – lichidare', amount:2500,  day:10, received:false },
+    { id:'i1', name:'Salariu Traian',     amount:19000, received:false },
+    { id:'i2', name:'Roxana – avans',     amount:2500, received:false },
+    { id:'i3', name:'Roxana – lichidare', amount:2500, received:false },
   ],
   fixed: [
     { id:'f1', name:'Rată ipotecar',              amount:4920, paid:false },
@@ -320,6 +395,7 @@ const DEFAULT_BUDGET = () => ({
   ],
   savingsMin: 2000,
   savingsTarget: 2500,
+  limits: {},   // limită lunară pe categorie (0 / gol = fără limită)
 });
 
 /* ---------------- Utilitare ---------------- */
@@ -368,6 +444,7 @@ function createLocalStore() {
     async addExpense(e) { const d = load(); d.expenses.push({ ...e, id:uid(), createdAt:Date.now() }); save(d); },
     async updateExpense(id, p) { const d = load(); const x = d.expenses.find(e => e.id === id); if (x) Object.assign(x, p); save(d); },
     async deleteExpense(id) { const d = load(); d.expenses = d.expenses.filter(e => e.id !== id); save(d); },
+    async getMonthExpenses(k) { return load().expenses.filter(e => e.month === k); },
     async getAll() { return load(); },
   };
 }
@@ -402,6 +479,10 @@ async function createFirebaseStore() {
     addExpense: e => F.addDoc(F.collection(db, 'expenses'), { ...e, createdAt:Date.now() }),
     updateExpense: (id, p) => F.updateDoc(F.doc(db, 'expenses', id), p),
     deleteExpense: id => F.deleteDoc(F.doc(db, 'expenses', id)),
+    async getMonthExpenses(k) {
+      const q = await F.getDocs(F.query(F.collection(db, 'expenses'), F.where('month', '==', k)));
+      return q.docs.map(d => ({ id:d.id, ...d.data() }));
+    },
     async getAll() {
       const [b, e] = await Promise.all([F.getDocs(F.collection(db, 'budgets')), F.getDocs(F.collection(db, 'expenses'))]);
       const budgets = {}; b.forEach(d => budgets[d.id] = d.data());
@@ -433,7 +514,7 @@ function calc(b, ex) {
 /* ---------------- Stare ---------------- */
 const store = LOCAL ? createLocalStore() : await createFirebaseStore();
 const nowKey = monthKey(new Date());
-const state = { user:null, month: nowKey < START_MONTH ? START_MONTH : nowKey, budget:null, expenses:[], tab:'dash', cat:'all', unsub:null, editId:null, pickCat:'mancare' };
+const state = { user:null, month: nowKey < START_MONTH ? START_MONTH : nowKey, budget:null, expenses:[], tab:'dash', cat:'all', q:'', prevExp:null, unsub:null, editId:null, pickCat:'mancare' };
 
 store.onAuth(u => {
   state.user = u;
@@ -458,12 +539,13 @@ $('#logoutBtn').onclick = () => store.logout();
 async function openMonth(key) {
   if (key < START_MONTH) key = START_MONTH;
   $('#prevM').style.visibility = key <= START_MONTH ? 'hidden' : 'visible';
-  state.month = key; state.unsub?.(); state.budget = null; state.expenses = [];
+  state.month = key; state.unsub?.(); state.budget = null; state.expenses = []; state.prevExp = null;
   $('#monthLabel').textContent = monthLabel(key);
   render();
   await store.ensureBudget(key);
   if (state.month !== key) return;
   state.unsub = store.watchMonth(key, b => { state.budget = b; render(); }, ex => { state.expenses = ex; render(); });
+  if (key > START_MONTH) store.getMonthExpenses(shiftMonth(key, -1)).then(x => { if (state.month === key) { state.prevExp = x; render(); } }).catch(() => {});
 }
 $('#prevM').onclick = () => openMonth(shiftMonth(state.month, -1));
 $('#nextM').onclick = () => openMonth(shiftMonth(state.month, 1));
@@ -495,13 +577,40 @@ function render(force) {
 
 function expRow(e) {
   const k = catOf(e.category);
-  return `<div class="row">
+  const q = state.tab === 'exp' ? state.q : '';
+  const hl = t => { const s = esc(t); if (!q) return s; const i = norm(t).indexOf(norm(q)); return i < 0 ? s : esc(t.slice(0, i)) + '<mark>' + esc(t.slice(i, i + q.length)) + '</mark>' + esc(t.slice(i + q.length)); };
+  return `<div class="swipe"><button class="swipe-del" data-act="swdel" data-id="${e.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Șterge</button><div class="row" data-act="edit" data-id="${e.id}">
     <div class="ico">${k.icon}</div>
-    <div class="grow"><div class="t">${esc(e.desc)}</div><div class="s">${shortDate(e.date)} · ${esc(k.name)} · ${esc(e.addedBy || '')}</div></div>
+    <div class="grow"><div class="t">${hl(e.desc)}</div><div class="s">${shortDate(e.date)} · ${esc(k.name)} · ${esc(e.addedBy || '')}</div></div>
     <div class="amt">−${NF.format(e.amount)}<div class="mono" style="text-align:right">lei</div></div>
     <button class="icon-btn" data-act="edit" data-id="${e.id}" aria-label="Editează">✎</button>
     <button class="icon-btn" data-act="del" data-id="${e.id}" aria-label="Șterge">🗑</button>
-  </div>`;
+  </div></div>`;
+}
+const limOf = (b, id) => +((b && b.limits) || {})[id] || 0;
+const limState = (spent, lim) => !lim ? '' : spent > lim ? 'bad' : spent >= lim * 0.8 ? 'warn' : '';
+const limColor = (st, base) => st === 'bad' ? 'var(--bad)' : st === 'warn' ? 'var(--warn)' : base;
+const norm = t => String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+function deltaChip(now, prev) {
+  if (prev == null) return '';
+  if (!now && !prev) return '';
+  if (!prev) return '<span class="dchip up">nou</span>';
+  const p = Math.round((now - prev) / prev * 100);
+  if (p === 0) return '<span class="dchip">= 0%</span>';
+  return `<span class="dchip ${p > 0 ? 'up' : 'down'}">${p > 0 ? '▲' : '▼'} ${Math.abs(p)}%</span>`;
+}
+// cheltuieli luna trecută, pe categorii; pt luna curentă comparăm „la aceeași dată”
+function prevStats() {
+  if (!state.prevExp) return null;
+  const sameDay = state.month === monthKey(new Date());
+  const day = new Date().getDate();
+  const byCat = {}; CATEGORIES.forEach(k => byCat[k.id] = 0); let variable = 0;
+  state.prevExp.forEach(e => {
+    if (e.category === 'economii') return;
+    if (sameDay && +(e.date || '').slice(8, 10) > day) return;
+    variable += +e.amount || 0; if (byCat[e.category] != null) byCat[e.category] += +e.amount || 0;
+  });
+  return { byCat, variable, sameDay, label: monthLabel(shiftMonth(state.month, -1)).split(' ')[0] };
 }
 const sortExp = a => [...a].sort((x, y) => (y.date || '').localeCompare(x.date || '') || (y.createdAt || 0) - (x.createdAt || 0));
 
@@ -512,11 +621,14 @@ function donut(id, segs, centerL, centerV) {
     const len = x.v / total * C; const gap = segs.filter(y => y.v > 0).length > 1 ? 2 : 0;
     const el = `<circle class="seg" data-donut="${id}" data-i="${segs.indexOf(x)}" r="${R}" cx="95" cy="95" stroke="${x.c}" stroke-dasharray="${Math.max(0, len - gap)} ${C}" stroke-dashoffset="${-off}"></circle>`;
     off += len; return el;
-  }).join('') : `<circle r="${R}" cx="95" cy="95" fill="none" stroke="#f3f1ec" stroke-width="26"></circle>`;
+  }).join('') : `<circle r="${R}" cx="95" cy="95" fill="none" stroke="${isDark() ? '#242427' : '#f3f1ec'}" stroke-width="26"></circle>`;
   return `<div class="donut" id="${id}"><svg viewBox="0 0 190 190">${circles}</svg>
     <div class="center"><div class="l">${centerL}</div><div class="v">${centerV}</div><div class="mono"></div></div></div>`;
 }
 const DONUTS = {};
+const DARKQ = matchMedia('(prefers-color-scheme: dark)');
+const isDark = () => DARKQ.matches;
+DARKQ.addEventListener?.('change', () => render(true));
 document.addEventListener('click', e => {
   const sg = e.target.closest('circle.seg'); if (!sg) return;
   e.stopPropagation();
@@ -540,16 +652,17 @@ function renderDash(c) {
   }
   const remPct = c.income > 0 ? Math.round(Math.max(0, c.remaining) / c.income * 100) : 0;
   const distSegs = [
-    { n:'Fixe', v:c.fixed, c:'#2e2d2b' },
+    { n:'Fixe', v:c.fixed, c:isDark() ? '#d9d6cf' : '#2e2d2b' },
     { n:'Variabile', v:c.variable, c:'#ff5a1f' },
     { n:'Economii', v:c.savings, c:'#16a34a' },
-    { n:'Rămas', v:Math.max(0, c.remaining), c:'#e9e4da' },
+    { n:'Rămas', v:Math.max(0, c.remaining), c:isDark() ? '#34332f' : '#e9e4da' },
   ];
   const catSegs = CATEGORIES.map(k => ({ n:k.name, v:c.byCat[k.id], c:k.color }));
   DONUTS.dDist = { segs:distSegs }; DONUTS.dCat = { segs:catSegs };
   const recent = sortExp(state.expenses).slice(0, 7);
   const savPct = c.b.savingsTarget > 0 ? Math.min(100, c.savings / c.b.savingsTarget * 100) : 0;
   const pctV = v => c.variable > 0 ? Math.round(v / c.variable * 100) : 0;
+  const ps = prevStats();
 
   $('#tab-dash').innerHTML = `
     <div class="cols">
@@ -557,6 +670,7 @@ function renderDash(c) {
         <div style="display:flex;justify-content:space-between;align-items:center"><div class="lbl">Buget rămas familie</div><span class="pillb">${monthLabel(state.month).split(' ')[0]}</span></div>
         <div class="big ${cls}">${NF.format(Math.round(c.remaining))}<small>lei</small></div>
         <div class="muted">${perDay || '&nbsp;'}</div>
+        ${ps ? `<div class="cmp">Variabile ${fmt(c.variable)} ${deltaChip(c.variable, ps.variable)} <span>vs ${ps.label}${ps.sameDay ? ' (la aceeași dată)' : ''}</span></div>` : ''}
         <div class="barrow"><span class="muted">Cheltuit din venit</span><b>${NF.format(Math.round(spent))} / ${NF.format(Math.round(c.income))} lei</b></div>
         <div class="bar"><span style="width:${spentPct}%"></span></div>
       </div>
@@ -581,18 +695,23 @@ function renderDash(c) {
 
     <div class="cols">
       <div class="card">
-        <h3>Pe categorii · ${monthLabel(state.month).split(' ')[0]} <span class="muted">Apasă pe felii</span></h3>
+        <h3>Pe categorii · ${monthLabel(state.month).split(' ')[0]} <span class="muted">${ps ? 'vs ' + ps.label : 'Apasă pe felii'}</span></h3>
         ${donut('dCat', catSegs, c.variable > 0 ? 'Variabile' : 'Nimic încă', c.variable > 0 ? NF.format(Math.round(c.variable)) + ' lei' : '—')}
         <div style="margin-top:14px">
-        ${CATEGORIES.map(k => `
+        ${CATEGORIES.map(k => {
+          const sp = c.byCat[k.id], lim = limOf(c.b, k.id), st = limState(sp, lim);
+          const w = lim ? Math.min(100, sp / lim * 100) : pctV(sp);
+          const info = lim ? `${NF.format(Math.round(sp))} / ${NF.format(lim)} lei` : `${NF.format(Math.round(sp))} lei · ${pctV(sp)}%`;
+          const sub = !lim ? '' : st === 'bad' ? `<div class="limtxt bad">Depășit cu ${fmt(sp - lim)}</div>` : st === 'warn' ? `<div class="limtxt warn">Aproape de limită · mai ai ${fmt(lim - sp)}</div>` : `<div class="limtxt">Mai ai ${fmt(lim - sp)}</div>`;
+          return `
           <div class="cat" data-cat="${k.id}">
             <div class="ico">${k.icon}</div>
             <div class="grow">
-              <div class="name"><span>${k.name}</span><span class="mono">${NF.format(Math.round(c.byCat[k.id]))} lei · ${pctV(c.byCat[k.id])}%</span></div>
-              <div class="mini"><span style="width:${pctV(c.byCat[k.id])}%;background:${k.color}"></span></div>
+              <div class="name"><span>${k.name}${ps ? deltaChip(sp, ps.byCat[k.id]) : ''}</span><span class="mono ${st}">${info}</span></div>
+              <div class="mini"><span style="width:${w}%;background:${limColor(st, k.color)}"></span></div>${sub}
             </div>
             <span class="chev">›</span>
-          </div>`).join('')}
+          </div>`; }).join('')}
         </div>
       </div>
       <div class="card">
@@ -605,61 +724,103 @@ function renderDash(c) {
 }
 
 function renderExp(c) {
-  const chips = [{ id:'all', name:'Toate', icon:'' }, ...ALLCATS];
+  const box = $('#tab-exp');
+  if (!$('#expSearch')) {
+    box.innerHTML = `
+      <div class="searchbar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="expSearch" type="search" placeholder="Caută (ex: covor, benzină, Roxana…)" autocomplete="off" enterkeyhint="search">
+        <button class="icon-btn hidden" id="expClear" aria-label="Șterge căutarea">✕</button>
+      </div>
+      <div id="expChips"></div><div class="hint">← Glisează un rând spre stânga ca să-l ștergi · atinge-l ca să-l editezi</div><div id="expList"></div>`;
+    $('#expSearch').addEventListener('input', e => { state.q = e.target.value.trim(); $('#expClear').classList.toggle('hidden', !state.q); renderExp(calc(state.budget, state.expenses)); });
+    $('#expClear').addEventListener('click', () => { $('#expSearch').value = ''; state.q = ''; $('#expClear').classList.add('hidden'); renderExp(calc(state.budget, state.expenses)); });
+  }
+  const chips = [{ id:'all', name:'Toate' }, ...ALLCATS];
   const all = state.cat === 'all';
   const list = all ? ALLCATS : ALLCATS.filter(k => k.id === state.cat);
-  const total = k => state.expenses.filter(e => e.category === k.id).reduce((s, e) => s + (+e.amount || 0), 0);
+  const q = norm(state.q);
+  const match = e => !q || [e.desc, e.addedBy, catOf(e.category).name, String(e.amount), shortDate(e.date)].some(v => norm(v).includes(q));
+  const found = state.expenses.filter(e => match(e) && (all || e.category === state.cat));
+  const sumOf = a => a.reduce((s, e) => s + (+e.amount || 0), 0);
+  $('#expChips').innerHTML = `<div class="chipbar"><div class="chips">${chips.map(k => `<button class="chip ${state.cat === k.id ? 'on' : ''}" data-chip="${k.id}">${k.name}</button>`).join('')}</div></div>`;
   const cards = list.map(k => {
-    const items = sortExp(state.expenses.filter(e => e.category === k.id));
-    if (all && !items.length) return '';
+    const items = sortExp(found.filter(e => e.category === k.id));
+    if ((all || q) && !items.length) return '';
+    const tot = sumOf(state.expenses.filter(e => e.category === k.id));
+    const lim = k.id === 'economii' ? 0 : limOf(c.b, k.id), st = limState(tot, lim);
     return `<div class="card">
-      <div class="grouphead"><span class="gl"><span class="ico">${k.icon}</span>${k.name}</span><span>${fmt(total(k))}</span></div>
+      <div class="grouphead"><span class="gl"><span class="ico">${k.icon}</span>${k.name}</span><span class="${st}">${lim ? `${NF.format(Math.round(tot))} / ${NF.format(lim)} lei` : fmt(tot)}</span></div>
+      ${lim ? `<div class="mini" style="margin:8px 0 2px"><span style="width:${Math.min(100, tot / lim * 100)}%;background:${limColor(st, k.color)}"></span></div>` : ''}
       ${items.length ? items.map(expRow).join('') : '<div class="empty">Nimic aici încă.</div>'}
       <div class="cardfoot"><button class="btn sec sm" data-addcat="${k.id}">+ Adaugă la ${k.name}</button></div>
     </div>`;
   }).join('');
-  $('#tab-exp').innerHTML = `
-    <div class="chipbar"><div class="chips">${chips.map(k => `<button class="chip ${state.cat === k.id ? 'on' : ''}" data-chip="${k.id}">${k.name}</button>`).join('')}</div></div>
+  $('#expList').innerHTML = `
+    ${q ? `<div class="sresult"><span>${found.length} rezultat${found.length === 1 ? '' : 'e'} pentru „${esc(state.q)}”</span><b>${fmt(sumOf(found))}</b></div>` : ''}
     ${cards ? `<div class="cols ${all ? 'c3' : ''}" ${all ? '' : 'style="grid-template-columns:1fr"'}>${cards}</div>`
-            : '<div class="card empty">Nicio cheltuială luna aceasta. Apasă <b>+</b> ca să adaugi.</div>'}
-  `;
+            : `<div class="card empty">${q ? 'Niciun rezultat în ' + monthLabel(state.month) + '.' : 'Nicio cheltuială luna aceasta. Apasă <b>+</b> ca să adaugi.'}</div>`}`;
 }
 
+const FIXICON = {
+  inc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 10l6 6 6-6"/><path d="M4 20h16"/></svg>',
+  fix: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>',
+  lim: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 12l6-6"/><path d="M15 3h6v6"/></svg>',
+};
 function renderFix(c) {
   const b = c.b;
+  const rowsOf = (k, flag) => b[k].map((x, idx) => `
+    <div class="erow ${x[flag] ? 'done' : ''}">
+      <input type="checkbox" class="chk" data-k="${k}" data-i="${idx}" data-f="${flag}" ${x[flag] ? 'checked' : ''} aria-label="${flag === 'paid' ? 'Plătit' : 'Încasat'}">
+      <input class="ein" data-k="${k}" data-i="${idx}" data-f="name" value="${esc(x.name)}">
+      <input class="eamt" type="number" step="0.01" inputmode="decimal" data-k="${k}" data-i="${idx}" data-f="amount" value="${x.amount}">
+      <button class="icon-btn" data-rm="${k}" data-i="${idx}" aria-label="Șterge">✕</button>
+    </div>`).join('') || '<div class="empty">Nimic aici.</div>';
+  const nRec = b.incomes.filter(i => i.received).length, nPaid = b.fixed.filter(f => f.paid).length;
+  const avail = c.income - c.fixed;
+  const pctOf = (a, t) => t > 0 ? Math.min(100, a / t * 100) : 0;
   $('#tab-fix').innerHTML = `<div class="cols">
-    <div class="card">
-      <h3>Venituri <span class="muted">bifează când intră banii</span></h3>
-      ${b.incomes.map((i, idx) => `
-        <div class="erow inc">
-          <input type="checkbox" class="chk c" data-k="incomes" data-i="${idx}" data-f="received" ${i.received ? 'checked' : ''} title="Încasat">
-          <input class="in n" data-k="incomes" data-i="${idx}" data-f="name" value="${esc(i.name)}">
-          <input class="in num d" type="number" min="1" max="31" data-k="incomes" data-i="${idx}" data-f="day" value="${i.day ?? ''}" title="Ziua din lună" placeholder="zi">
-          <input class="in num a" type="number" step="0.01" inputmode="decimal" data-k="incomes" data-i="${idx}" data-f="amount" value="${i.amount}">
-          <button class="icon-btn x" data-rm="incomes" data-i="${idx}" aria-label="Șterge">✕</button>
-        </div>`).join('') || '<div class="empty">Niciun venit.</div>'}
-      <div class="tot"><span>Total venit</span><span>${fmt(c.income)}</span></div>
-      <div class="cardfoot">
-        <button class="btn sec sm" data-addrow="incomes">+ Venit (bonus, tichete…)</button>
-        <span class="muted">Coloana mică = ziua din lună</span>
+    <div class="card hero glow sumcard">
+      <div class="lbl">Disponibil după cheltuielile fixe</div>
+      <div class="big ${avail < 0 ? 'bad' : ''}">${NF.format(Math.round(avail))}<small>lei</small></div>
+      <div class="muted">${fmt(c.income)} venit − ${fmt(c.fixed)} fixe · ${c.income > 0 ? Math.round(c.fixed / c.income * 100) : 0}% din venit merge pe fixe</div>
+      <div class="stat2">
+        <div><div class="k">Încasat</div><div class="v">${NF.format(c.incomeRec)} <small>/ ${NF.format(c.income)}</small></div><div class="mini"><span style="width:${pctOf(c.incomeRec, c.income)}%;background:var(--ok)"></span></div></div>
+        <div><div class="k">Plătit</div><div class="v">${NF.format(c.fixedPaid)} <small>/ ${NF.format(c.fixed)}</small></div><div class="mini"><span style="width:${pctOf(c.fixedPaid, c.fixed)}%;background:var(--brand)"></span></div></div>
       </div>
     </div>
-
     <div class="card">
-      <h3>Cheltuieli fixe <span class="muted">bifează când e plătit</span></h3>
-      ${b.fixed.map((f, idx) => `
-        <div class="erow">
-          <input type="checkbox" class="chk" data-k="fixed" data-i="${idx}" data-f="paid" ${f.paid ? 'checked' : ''} title="Plătit">
-          <input class="in" data-k="fixed" data-i="${idx}" data-f="name" value="${esc(f.name)}">
-          <input class="in num" type="number" step="0.01" inputmode="decimal" data-k="fixed" data-i="${idx}" data-f="amount" value="${f.amount}">
-          <button class="icon-btn" data-rm="fixed" data-i="${idx}" aria-label="Șterge">✕</button>
-        </div>`).join('') || '<div class="empty">Nicio cheltuială fixă.</div>'}
-      <div class="tot"><span>Total fixe</span><span>${fmt(c.fixed)}</span></div>
-      <div class="cardfoot">
-        <button class="btn sec sm" data-addrow="fixed">+ Cheltuială fixă</button>
-        <span class="muted">Luna următoare preia automat aceste sume</span>
+      <div class="sechead"><div class="tile inc">${FIXICON.inc}</div><div><div class="tt">Venituri</div><div class="st">Bifează când intră banii</div></div>
+        <span class="countpill ${b.incomes.length && nRec === b.incomes.length ? 'all' : ''}">${nRec}/${b.incomes.length} încasate</span></div>
+      ${rowsOf('incomes', 'received')}
+      <div class="totpill"><span>Total venit</span><span>${fmt(c.income)}</span></div>
+      <button class="addline" data-addrow="incomes">+ Adaugă venit</button>
+    </div>
+    <div class="card">
+      <div class="sechead"><div class="tile fix">${FIXICON.fix}</div><div><div class="tt">Cheltuieli fixe</div><div class="st">Bifează când e plătit</div></div>
+        <span class="countpill ${b.fixed.length && nPaid === b.fixed.length ? 'all' : ''}">${nPaid}/${b.fixed.length} plătite</span></div>
+      ${rowsOf('fixed', 'paid')}
+      <div class="totpill"><span>Total fixe</span><span>${fmt(c.fixed)}</span></div>
+      <button class="addline" data-addrow="fixed">+ Adaugă cheltuială fixă</button>
+    </div>
+    <div class="card sumcard">
+      <div class="sechead"><div class="tile lim">${FIXICON.lim}</div><div><div class="tt">Limite lunare pe categorii</div><div class="st">Lasă gol pentru fără limită · se preiau automat luna următoare</div></div></div>
+      <div class="cols" style="margin:0;gap:0 28px">
+      <div>${CATEGORIES.slice(0, 3).map(k => limRow(k, c)).join('')}</div>
+      <div>${CATEGORIES.slice(3).map(k => limRow(k, c)).join('')}</div>
       </div>
     </div>
+  </div>`;
+}
+function limRow(k, c) {
+  const sp = c.byCat[k.id], lim = limOf(c.b, k.id), st = limState(sp, lim);
+  return `<div class="limrow">
+    <div class="ico">${k.icon}</div>
+    <div class="grow">
+      <div class="nm"><span>${k.name}</span><span class="mono ${st}">${NF.format(Math.round(sp))} lei</span></div>
+      <div class="mini"><span style="width:${lim ? Math.min(100, sp / lim * 100) : 0}%;background:${limColor(st, k.color)}"></span></div>
+    </div>
+    <input class="liminp" type="number" min="0" step="50" inputmode="numeric" placeholder="fără" data-lim="${k.id}" value="${lim || ''}" aria-label="Limită ${k.name}">
   </div>`;
 }
 
@@ -696,7 +857,16 @@ async function commitBudget(b) {
 
 /* ---------------- Evenimente ---------------- */
 document.querySelector('main').addEventListener('click', async e => {
+  if (Date.now() < swipeIgnoreUntil) return;
   const t = e.target.closest('[data-act],[data-cat],[data-chip],[data-addcat],[data-addrow],[data-rm]'); if (!t) return;
+  if (t.dataset.act === 'swdel') {
+    const x = state.expenses.find(y => y.id === t.dataset.id); if (!x) return;
+    const sw = t.closest('.swipe'); sw.style.transition = 'height .2s, opacity .2s'; sw.style.height = sw.offsetHeight + 'px';
+    requestAnimationFrame(() => { sw.style.height = '0px'; sw.style.opacity = '0'; });
+    setTimeout(async () => { state.expenses = state.expenses.filter(y => y.id !== x.id); render(true); await store.deleteExpense(x.id); toast(`Șters: ${x.desc}`); }, 200);
+    return;
+  }
+  if (t.dataset.act === 'edit' && document.querySelector('.swipe.open')) { closeSwipes(); return; }
   if (t.dataset.act === 'edit') return openExpDlg(state.expenses.find(x => x.id === t.dataset.id));
   if (t.dataset.act === 'del') {
     const x = state.expenses.find(y => y.id === t.dataset.id);
@@ -714,7 +884,7 @@ document.querySelector('main').addEventListener('click', async e => {
     const b = clone(state.budget || DEFAULT_BUDGET());
     b[k].push(k === 'fixed'
       ? { id:uid(), name:'Cheltuială nouă', amount:0, paid:false }
-      : { id:uid(), name:'Venit nou', amount:0, day:1, received:false });
+      : { id:uid(), name:'Venit nou', amount:0, received:false });
     await commitBudget(b);
     const ins = document.querySelectorAll(`input[data-k="${k}"][data-f="name"]`);
     const last = ins[ins.length - 1]; last?.focus(); last?.select();
@@ -735,6 +905,8 @@ document.querySelector('main').addEventListener('change', async e => {
     item[f] = el.type === 'checkbox' ? el.checked : (f === 'name' ? el.value.trim() : (+el.value || 0));
   } else if (el.dataset.sav) {
     b[el.dataset.sav] = +el.value || 0;
+  } else if (el.dataset.lim) {
+    b.limits = { ...(b.limits || {}), [el.dataset.lim]: Math.max(0, +el.value || 0) };
   } else return;
   el.blur();
   await commitBudget(b);
@@ -743,6 +915,41 @@ document.querySelector('main').addEventListener('change', async e => {
 // Enter într-un câmp = confirmare
 document.querySelector('main').addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.matches('input.in')) e.target.blur();
+});
+
+/* ---------------- Swipe stânga pentru ștergere ---------------- */
+let sw = null, swipeIgnoreUntil = 0;
+const SW_OPEN = -92;
+function closeSwipes(except) {
+  document.querySelectorAll('.swipe.open').forEach(s => { if (s !== except) { s.classList.remove('open'); s.querySelector('.row').style.transform = ''; } });
+}
+const mainEl = document.querySelector('main');
+mainEl.addEventListener('touchstart', e => {
+  const row = e.target.closest('.swipe > .row');
+  closeSwipes(row?.parentElement);
+  if (!row) { sw = null; return; }
+  const t = e.touches[0];
+  sw = { row, x0:t.clientX, y0:t.clientY, dir:null, base: row.parentElement.classList.contains('open') ? SW_OPEN : 0, tx:0 };
+}, { passive:true });
+mainEl.addEventListener('touchmove', e => {
+  if (!sw) return;
+  const t = e.touches[0], dx = t.clientX - sw.x0, dy = t.clientY - sw.y0;
+  if (!sw.dir) { if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return; sw.dir = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v'; if (sw.dir === 'h') sw.row.style.transition = 'none'; }
+  if (sw.dir !== 'h') return;
+  e.preventDefault();
+  let tx = sw.base + dx; if (tx > 0) tx = 0; if (tx < SW_OPEN) tx = SW_OPEN + (tx - SW_OPEN) * 0.3;
+  sw.tx = tx; sw.row.style.transform = `translateX(${tx}px)`;
+}, { passive:false });
+mainEl.addEventListener('touchend', () => {
+  if (!sw) return;
+  if (sw.dir === 'h') {
+    sw.row.style.transition = '';
+    const open = sw.tx < SW_OPEN / 2;
+    sw.row.parentElement.classList.toggle('open', open);
+    sw.row.style.transform = open ? `translateX(${SW_OPEN}px)` : '';
+    swipeIgnoreUntil = Date.now() + 350;
+  }
+  sw = null;
 });
 
 /* ---------------- Dialog cheltuială ---------------- */
@@ -784,11 +991,19 @@ $('#expForm').addEventListener('submit', async e => {
   if (date.slice(0, 7) < START_MONTH) return toast('Data trebuie să fie din Octombrie 2026 încolo');
   const data = { category:state.pickCat, desc:$('#fDesc').value.trim(), amount, date, month:date.slice(0, 7), addedBy:pickPerson };
   localStorage.setItem(PERSON_KEY, pickPerson);
+  const lim = limOf(state.budget, data.category);
+  let warn = '';
+  if (lim && data.month === state.month) {
+    const before = state.expenses.filter(x => x.category === data.category && x.id !== state.editId).reduce((s, x) => s + (+x.amount || 0), 0);
+    const after = before + amount;
+    if (after > lim) warn = `⚠️ Ai depășit limita la ${catOf(data.category).name} cu ${fmt(after - lim)}`;
+    else if (after >= lim * 0.8) warn = `Atenție: ${catOf(data.category).name} e la ${Math.round(after / lim * 100)}% din limită`;
+  }
   try {
     if (state.editId) await store.updateExpense(state.editId, data);
     else await store.addExpense(data);
     dlg.close();
-    toast(data.month === state.month ? 'Salvat ✔' : `Salvat în ${monthLabel(data.month)}`);
+    toast(warn || (data.month === state.month ? 'Salvat ✔' : `Salvat în ${monthLabel(data.month)}`));
   } catch (err) { toast('Eroare: ' + (err.code || err.message)); }
 });
 
@@ -836,8 +1051,8 @@ async function exportExcel(all) {
       }),
       Array.from({ length:CATEGORIES.length + 5 }, (_, i) => i + 1));
 
-    addSheet(wb, 'Venituri', ['Luna', 'Sursa', 'Ziua', 'Suma', 'Încasat'],
-      months.flatMap(m => (budgets[m] || DEFAULT_BUDGET()).incomes.map(i => [monthLabel(m), i.name, i.day ?? '', +i.amount || 0, i.received ? 'Da' : 'Nu'])), [3]);
+    addSheet(wb, 'Venituri', ['Luna', 'Sursa', 'Suma', 'Încasat'],
+      months.flatMap(m => (budgets[m] || DEFAULT_BUDGET()).incomes.map(i => [monthLabel(m), i.name, +i.amount || 0, i.received ? 'Da' : 'Nu'])), [2]);
 
     addSheet(wb, 'Cheltuieli fixe', ['Luna', 'Denumire', 'Suma', 'Plătit'],
       months.flatMap(m => (budgets[m] || DEFAULT_BUDGET()).fixed.map(f => [monthLabel(m), f.name, +f.amount || 0, f.paid ? 'Da' : 'Nu'])), [2]);
